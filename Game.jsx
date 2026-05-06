@@ -155,17 +155,30 @@ export default function Game({ session, match, onGameOver }) {
     } else if (side === 'enemy' && selectedCard?.origin === 'field') {
       if (gameState.phase !== 'BATTLE' || !selectedCard.canAttack) return;
       const target = oppField[index];
+      const hasOpponentMonsters = oppField.some(s => s !== null);
+
       if (target) {
         const diff = selectedCard.atk - target.atk;
         if (diff > 0) {
           if (isP1) { newState.p2LP -= diff; newState.p2Field[index] = null; }
           else { newState.p1LP -= diff; newState.p1Field[index] = null; }
+        } else if (diff === 0) {
+          if (isP1) { newState.p2Field[index] = null; newState.p1Field[selectedCard.index] = null; }
+          else { newState.p1Field[index] = null; newState.p2Field[selectedCard.index] = null; }
+        } else {
+          if (isP1) { newState.p1LP -= Math.abs(diff); newState.p1Field[selectedCard.index] = null; }
+          else { newState.p2LP -= Math.abs(diff); newState.p2Field[selectedCard.index] = null; }
         }
-      } else if (oppField.every(s => s === null)) {
+      } else if (!hasOpponentMonsters) {
         if (isP1) newState.p2LP -= selectedCard.atk; else newState.p1LP -= selectedCard.atk;
+      } else {
+        alert("Du musst ein gegnerisches Monster angreifen!");
+        return;
       }
-      if (isP1) newState.p1Field[selectedCard.index].canAttack = false;
-      else newState.p2Field[selectedCard.index].canAttack = false;
+
+      if (isP1 && newState.p1Field[selectedCard.index]) newState.p1Field[selectedCard.index].canAttack = false;
+      else if (!isP1 && newState.p2Field[selectedCard.index]) newState.p2Field[selectedCard.index].canAttack = false;
+      
       setSelectedCard(null);
       checkGameOver(newState); // Prüfen ob jemand gewonnen hat
       updateCloudState(newState);
