@@ -32,7 +32,11 @@ const TCGCard = ({ card, location, onClick, isSelected, isTargetable }) => {
           <span className="card-name">{card.name}</span>
         </div>
         <div className="card-art" style={{ backgroundImage: `url('/mythology_tcg_spritesheet_1777314791141.png')`, backgroundPosition: `${col * 33.333}% ${row * 33.333}%` }} />
-        <div className="card-stats"><span>A/{card.atk}</span><span>D/{card.def}</span></div>
+        <div className="card-stats">
+          <span>A/{card.atk}</span>
+          <span>D/{card.def}</span>
+          <span className="hp-stat" style={{ color: '#10b981' }}>H/{card.currentHp ?? card.hp}</span>
+        </div>
       </div>
     </motion.div>
   );
@@ -143,7 +147,7 @@ export default function Game({ session, match, onGameOver }) {
     if (side === 'player') {
       if (selectedCard?.origin === 'hand' && !myField[index]) {
         const newField = isP1 ? [...gameState.p1Field] : [...gameState.p2Field];
-        newField[index] = { ...selectedCard, canAttack: false };
+        newField[index] = { ...selectedCard, canAttack: false, currentHp: selectedCard.hp };
         if (isP1) newState.p1Field = newField; else newState.p2Field = newField;
         newState.hasSummoned = true;
         setPlayerHand(prev => prev.filter(c => c.instanceId !== selectedCard.instanceId));
@@ -155,19 +159,39 @@ export default function Game({ session, match, onGameOver }) {
     } else if (side === 'enemy' && selectedCard?.origin === 'field') {
       if (gameState.phase !== 'BATTLE' || !selectedCard.canAttack) return;
       const target = oppField[index];
+      const hasEnemyMonsters = oppField.some(m => m !== null);
+      const hasTaunt = oppField.some(m => m?.taunt);
+
       if (target) {
-        const diff = selectedCard.atk - target.atk;
-        if (diff > 0) {
-          if (isP1) { newState.p2LP -= diff; newState.p2Field[index] = null; }
-          else { newState.p1LP -= diff; newState.p1Field[index] = null; }
+        if (hasTaunt && !target.taunt) {
+          return alert("Du musst zuerst das Monster mit Spott (Taunt) angreifen!");
         }
-      } else if (oppField.every(s => s === null)) {
-        if (isP1) newState.p2LP -= selectedCard.atk; else newState.p1LP -= selectedCard.atk;
+        // Kampf gegen Monster
+        const damage = selectedCard.atk;
+        target.currentHp -= damage;
+        
+        if (target.currentHp <= 0) {
+          if (isP1) newState.p2Field[index] = null;
+          else newState.p1Field[index] = null;
+          newState.log.push(`${selectedCard.name} zerstört ${target.name}!`);
+        } else {
+          newState.log.push(`${selectedCard.name} greift ${target.name} an (${damage} Schaden).`);
+        }
+      } else if (!hasEnemyMonsters) {
+        // Direkter Angriff
+        if (isP1) newState.p2LP -= selectedCard.atk;
+        else newState.p1LP -= selectedCard.atk;
+        newState.log.push(`${selectedCard.name} greift direkt an!`);
+      } else {
+        // Fall: Klick auf leeres Feld, aber Monster existieren
+        return alert("Du musst ein gegnerisches Monster angreifen!");
       }
+      
       if (isP1) newState.p1Field[selectedCard.index].canAttack = false;
       else newState.p2Field[selectedCard.index].canAttack = false;
+      
       setSelectedCard(null);
-      checkGameOver(newState); // Prüfen ob jemand gewonnen hat
+      checkGameOver(newState);
       updateCloudState(newState);
     }
   };
@@ -196,7 +220,27 @@ export default function Game({ session, match, onGameOver }) {
       </div>
       <div className="playmat">
         <div className="mat-row monsters">
-          {oppField.map((card, i) => (<TCGCard key={i} card={card} location="field enemy" onClick={() => handleFieldClick(i, 'enemy')} />))}
+          {oppField.map((card, i) => {
+            const hasEnemyMonsters = oppField.some(m => m !== null);
+            const hasTaunt = oppField.some(m => m?.taunt);
+            const isTargetable = selectedCard?.origin === 'field' && 
+                                gameState.phase === 'BATTLE' && 
+                                selectedCard.canAttack && 
+                                (
+                                  (hasTaunt ? card?.taunt : card !== null) || 
+                                  (!hasEnemyMonsters && card === null)
+                                );
+            
+            return (
+              <TCGCard 
+                key={i} 
+                card={card} 
+                location="field enemy" 
+                onClick={() => handleFieldClick(i, 'enemy')} 
+                isTargetable={isTargetable}
+              />
+            );
+          })}
         </div>
         <div className="mat-row monsters">
           {myField.map((card, i) => (<TCGCard key={i} card={card} location="field" onClick={() => handleFieldClick(i, 'player')} isSelected={selectedCard?.index === i} />))}
