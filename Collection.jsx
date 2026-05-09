@@ -16,7 +16,7 @@ export default function Collection({ session, setView }) {
 
   useEffect(() => {
     fetchCards()
-  }, []) // Load all once, filter in render or separately
+  }, [])
 
   const fetchCards = async () => {
     setLoading(true)
@@ -50,7 +50,6 @@ export default function Collection({ session, setView }) {
 
   const addToDeck = async (card) => {
     const rarity = card.details?.rarity || 'common'
-    // Count across ALL cards, not just filtered ones
     const currentRarityCount = cards.reduce((sum, c) => 
       sum + (c.details.rarity === rarity ? c.instances.filter(i => i.is_in_deck).length : 0), 0)
     
@@ -76,7 +75,6 @@ export default function Collection({ session, setView }) {
     const nextInstance = card.instances.find(i => i.is_in_deck)
     if (!nextInstance) return 
     
-    // Optimistic Update for immediate feedback
     setCards(prev => prev.map(c => {
       if (c.id === card.id) {
         const updatedInstances = c.instances.map(i => i.id === nextInstance.id ? { ...i, is_in_deck: false } : i)
@@ -114,7 +112,6 @@ export default function Collection({ session, setView }) {
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1 style={{ fontSize: '3rem', fontWeight: 900, color: '#fbbf24', margin: '20px 0 10px 0' }}>MEINE SAMMLUNG</h1>
         
-        {/* Rarity Slots Status */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '20px', fontSize: '0.8rem', fontWeight: 800, flexWrap: 'wrap' }}>
           <div style={{ color: '#94a3b8' }}>COMMON: {getRarityCount('common')}/{DECK_LIMITS.common}</div>
           <div style={{ color: '#3b82f6' }}>RARE: {getRarityCount('rare')}/{DECK_LIMITS.rare}</div>
@@ -122,7 +119,6 @@ export default function Collection({ session, setView }) {
           <div style={{ color: '#fbbf24' }}>LEGENDARY: {getRarityCount('legendary')}/{DECK_LIMITS.legendary}</div>
         </div>
 
-        {/* Rarity Filter Bar */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
           {rarities.map(r => (
             <button
@@ -160,7 +156,7 @@ export default function Collection({ session, setView }) {
               epic: '#a855f7',
               legendary: '#fbbf24'
             }[rarity]
-                       const inDeckCount = card.instances.filter(i => i.is_in_deck).length
+            const inDeckCount = card.instances.filter(i => i.is_in_deck).length
             return <CardItem key={card.id} card={card} inDeckCount={inDeckCount} rColor={rColor} rarity={rarity} removeFromDeck={removeFromDeck} addToDeck={addToDeck} />
           })}
         </div>
@@ -170,7 +166,7 @@ export default function Collection({ session, setView }) {
 }
 
 function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck }) {
-  const [imgStatus, setImgStatus] = useState('loading') // loading, loaded, error
+  const [imgStatus, setImgStatus] = useState('loading')
 
   return (
     <div 
@@ -189,7 +185,6 @@ function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck
           : `0 10px 20px rgba(0,0,0,0.3)`
       }}
     >
-      {/* In Deck Badge */}
       {inDeckCount > 0 && (
         <div style={{ 
           position: 'absolute', top: '-10px', right: '-10px', background: '#10b981', color: '#000', 
@@ -200,7 +195,6 @@ function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck
         </div>
       )}
 
-      {/* Ownership Count Badge */}
       {card.count > 1 && (
         <div style={{ 
           position: 'absolute', top: '-12px', left: '-12px', 
@@ -215,55 +209,39 @@ function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck
       )}
 
       <div style={{ width: '100%', height: '100%', borderRadius: '10px', overflow: 'hidden', position: 'relative', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {card.details?.fullArtUrl ? (
-          <>
-            {imgStatus !== 'loaded' && (
-              <div style={{ 
-                position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center'
-              }}>
-                <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#fbbf24', marginBottom: '5px' }}>{card.details.name}</div>
-                <div style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{imgStatus === 'loading' ? 'LÄDT...' : 'BILD FEHLT'}</div>
-                <div style={{ fontSize: '0.5rem', marginTop: '5px' }}>ATK {card.details.atk} / DEF {card.details.def}</div>
-              </div>
-            )}
-
-            <img 
-              src={card.details.fullArtUrl} 
-              alt={card.details.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: imgStatus === 'loaded' ? 'block' : 'none' }}
-              onLoad={() => setImgStatus('loaded')}
-              onError={() => setImgStatus('error')}
-            />
-            
-            {/* Deck Controls Overlay */}
-            <div className="card-controls" style={{ 
-              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 10,
-              background: 'rgba(0,0,0,0.4)', opacity: 0, transition: 'opacity 0.2s'
-            }} onMouseEnter={(e) => e.currentTarget.style.opacity = 1} onMouseLeave={(e) => e.currentTarget.style.opacity = 0}>
-              <div style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                 {inDeckCount} / {card.count}
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                 <button onClick={(e) => { e.stopPropagation(); removeFromDeck(card); }} style={{ background: '#ef4444', border: 'none', color: 'white', borderRadius: '4px', width: '35px', height: '35px', cursor: 'pointer', fontWeight: 900 }}>-</button>
-                 <button onClick={(e) => { e.stopPropagation(); addToDeck(card); }} style={{ background: '#10b981', border: 'none', color: 'white', borderRadius: '4px', width: '35px', height: '35px', cursor: 'pointer', fontWeight: 900 }}>+</button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '10px' }}>
-            <div style={{ fontWeight: 900, color: '#fbbf24' }}>{card.details?.name}</div>
-            <div style={{ fontSize: '0.7rem' }}>KEIN BILD</div>
+        {imgStatus !== 'loaded' && (
+          <div style={{ 
+            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center'
+          }}>
+            <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#fbbf24', marginBottom: '5px' }}>{card.details.name}</div>
+            <div style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{imgStatus === 'loading' ? 'LÄDT...' : 'BILD FEHLT'}</div>
+            <div style={{ fontSize: '0.5rem', marginTop: '5px' }}>ATK {card.details.atk} / DEF {card.details.def}</div>
           </div>
         )}
+
+        <img 
+          src={card.details.fullArtUrl} 
+          alt={card.details.name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: imgStatus === 'loaded' ? 'block' : 'none' }}
+          onLoad={() => setImgStatus('loaded')}
+          onError={() => setImgStatus('error')}
+        />
+        
+        <div className="card-controls" style={{ 
+          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 10,
+          background: 'rgba(0,0,0,0.6)', opacity: 0, transition: 'opacity 0.2s'
+        }} onMouseEnter={(e) => e.currentTarget.style.opacity = 1} onMouseLeave={(e) => e.currentTarget.style.opacity = 0}>
+          <div style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+             {inDeckCount} / {card.count}
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+             <button onClick={(e) => { e.stopPropagation(); removeFromDeck(card); }} style={{ background: '#ef4444', border: 'none', color: 'white', borderRadius: '4px', width: '35px', height: '35px', cursor: 'pointer', fontWeight: 900 }}>-</button>
+             <button onClick={(e) => { e.stopPropagation(); addToDeck(card); }} style={{ background: '#10b981', border: 'none', color: 'white', borderRadius: '4px', width: '35px', height: '35px', cursor: 'pointer', fontWeight: 900 }}>+</button>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
->
-      )}
-    </div>
-  )
-}
-
