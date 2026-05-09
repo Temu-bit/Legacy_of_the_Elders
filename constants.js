@@ -21,6 +21,8 @@ export const CARD_POOL = [
   { id: 'c20', name: 'Chronos Weaver', atk: 1900, def: 3300, level: 7, rarity: 'epic', fullArtUrl: '/cards/chronos_weaver.png', type: 'monster', desc: 'Sie webt die Fäden der Zeit selbst.' },
   { id: 'c21', name: 'Stone Duck', atk: 2300, def: 2500, level: 7, rarity: 'epic', fullArtUrl: '/cards/stone_duck.png', type: 'monster', desc: 'Eine gewaltige Ente aus lebendem Fels.' },
   { id: 'c22', name: 'Ocean Empress', atk: 2400, def: 2600, level: 8, rarity: 'legendary', fullArtUrl: '/cards/ocean_empress.png', type: 'monster', desc: 'Die unangefochtene Herrscherin über die sieben Weltmeere.' },
+  { id: 'c23', name: 'Frost Saber', atk: 2400, def: 2600, level: 8, rarity: 'legendary', fullArtUrl: '/cards/frost_saber.png', type: 'monster', desc: 'Ein eisiger Jäger aus den gefrorenen Gipfeln.' },
+  { id: 'c24', name: 'Sporekeeper', atk: 2100, def: 2300, level: 6, rarity: 'epic', fullArtUrl: '/cards/sporekeeper.png', type: 'monster', desc: 'Wächter der giftigen Pilzgrotte.' },
 ];
 
 export const INITIAL_LP = 8000;
