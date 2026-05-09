@@ -221,68 +221,42 @@ export default function Collection({ session, setView }) {
                   }}>
                     {card.count}
                   </div>
-                )}
-
-                <div style={{ width: '100%', height: '100%', borderRadius: '10px', overflow: 'hidden', position: 'relative' }}>
+                )}                <div style={{ width: '100%', height: '100%', borderRadius: '10px', overflow: 'hidden', position: 'relative', background: '#0f172a' }}>
                   {card.details?.fullArtUrl ? (
-                     <div style={{ 
-                       width: '100%', 
-                       height: '100%', 
-                       backgroundImage: `url('${card.details.fullArtUrl}')`, 
-                       backgroundSize: 'cover',
-                       backgroundPosition: 'center',
-                       display: 'flex',
-                       flexDirection: 'column',
-                       justifyContent: 'flex-end'
-                     }}>
-                       
-                       {/* Deck Controls Overlay - Now hidden by default, visible on hover via CSS */}
-                       <div className="card-controls" style={{ 
-                         position: 'absolute',
-                         inset: 0,
-                         display: 'flex',
-                         flexDirection: 'column',
-                         alignItems: 'center', 
-                         justifyContent: 'center', 
-                         gap: '15px',
-                         zIndex: 10
-                       }}>
-                         <div style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1.2rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                            {inDeckCount} / {card.count} im Deck
-                         </div>
-                         <div style={{ display: 'flex', gap: '15px' }}>
-                            <button 
-                              onClick={() => removeFromDeck(card)}
-                              style={{ background: '#ef4444', border: 'none', color: 'white', borderRadius: '8px', width: '45px', height: '45px', cursor: 'pointer', fontWeight: 900, fontSize: '1.5rem', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}
-                            >
-                              -
-                            </button>
-                            <button 
-                              onClick={() => addToDeck(card)}
-                              style={{ background: '#10b981', border: 'none', color: 'white', borderRadius: '8px', width: '45px', height: '45px', cursor: 'pointer', fontWeight: 900, fontSize: '1.5rem', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}
-                            >
-                              +
-                            </button>
-                         </div>
-                       </div>
-
-                       <div style={{ 
-                         background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 100%)',
-                         backdropFilter: 'blur(4px)',
-                         padding: '6px 10px', 
-                         display: 'flex', 
-                         justifyContent: 'space-between', 
-                         fontSize: '0.75rem', 
-                         fontWeight: 900,
-                         color: '#fff',
-                         borderTop: `1px solid ${rColor}55`
-                       }}>
-                         <span>ATK {card.details.atk}</span>
-                         <span style={{ color: rColor }}>LV {card.details.level}</span>
-                         <span>DEF {card.details.def}</span>
-                       </div>
-                     </div>
-                  ) : null}
+                    <>
+                      <img 
+                        src={card.details.fullArtUrl} 
+                        alt={card.details.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div style={{ 
+                        display: 'none', position: 'absolute', inset: 0, 
+                        flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                        padding: '10px', textAlign: 'center' 
+                      }}>
+                        <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#fbbf24', marginBottom: '5px' }}>{card.details.name}</div>
+                        <div style={{ fontSize: '0.6rem' }}>ATK {card.details.atk} / DEF {card.details.def}</div>
+                      </div>
+                      
+                      {/* Deck Controls Overlay */}
+                      <div className="card-controls" style={{ 
+                        position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 10
+                      }}>
+                        <div style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1.2rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                           {inDeckCount} / {card.count} im Deck
+                        </div>
+                        <div style={{ display: 'flex', gap: '15px' }}>
+                           <button onClick={() => removeFromDeck(card)} style={{ background: '#ef4444', border: 'none', color: 'white', borderRadius: '8px', width: '45px', height: '45px', cursor: 'pointer', fontWeight: 900, fontSize: '1.5rem' }}>-</button>
+                           <button onClick={() => addToDeck(card)} style={{ background: '#10b981', border: 'none', color: 'white', borderRadius: '8px', width: '45px', height: '45px', cursor: 'pointer', fontWeight: 900, fontSize: '1.5rem' }}>+</button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )

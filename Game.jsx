@@ -27,20 +27,6 @@ const TCGCard = ({ card, location, onClick, isSelected, isTargetable }) => {
           justifyContent: 'flex-end'
         }}
       >
-        <div style={{ 
-          background: 'rgba(0,0,0,0.7)', 
-          padding: '4px 8px', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          fontSize: '0.7rem', 
-          fontWeight: 900,
-          color: '#fff',
-          borderTop: '1px solid rgba(255,255,255,0.2)'
-        }}>
-          <span>A/{card.atk}</span>
-          <span style={{ color: '#fbbf24' }}>L{card.level}</span>
-          <span>D/{card.def}</span>
-        </div>
       </motion.div>
     );
   }
