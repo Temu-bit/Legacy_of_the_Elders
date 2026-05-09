@@ -256,6 +256,11 @@ export default function Collection({ session, setView }) {
                         </div>
                       </div>
                     </>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontWeight: 900, color: '#fbbf24' }}>{card.details?.name || 'Unbekannte Karte'}</div>
+                      <div style={{ fontSize: '0.7rem' }}>BILD FEHLT</div>
+                    </div>
                   )}
                 </div>
               </div>
