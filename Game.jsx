@@ -15,8 +15,32 @@ const TCGCard = ({ card, location, onClick, isSelected, isTargetable }) => {
         className={`tcg-card full-art ${location} ${isSelected ? 'selected' : ''} ${isTargetable ? 'targetable' : ''}`}
         layoutId={card.instanceId}
         onClick={() => onClick && onClick(card)}
-        style={{ backgroundImage: `url('${card.fullArtUrl}')`, backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', border: 'none', borderRadius: '15px', overflow: 'hidden' }}
+        style={{ 
+          backgroundImage: `url('${card.fullArtUrl}')`, 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center', 
+          border: 'none', 
+          borderRadius: '12px', 
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end'
+        }}
       >
+        <div style={{ 
+          background: 'rgba(0,0,0,0.7)', 
+          padding: '4px 8px', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          fontSize: '0.7rem', 
+          fontWeight: 900,
+          color: '#fff',
+          borderTop: '1px solid rgba(255,255,255,0.2)'
+        }}>
+          <span>A/{card.atk}</span>
+          <span style={{ color: '#fbbf24' }}>L{card.level}</span>
+          <span>D/{card.def}</span>
+        </div>
       </motion.div>
     );
   }
@@ -131,9 +155,34 @@ export default function Game({ session, match, onGameOver }) {
 
   const handleHandClick = (card) => {
     if (!myTurn || gameState.phase !== 'MAIN' || gameState.hasSummoned) return;
-    const tributesNeeded = card.level >= 10 ? 3 : card.level >= 7 ? 2 : card.level >= 5 ? 1 : 0;
-    if (myField.filter(m => m !== null).length < tributesNeeded) return alert("Nicht genug Opfer!");
-    setSelectedCard({ ...card, origin: 'hand', tributesNeeded, tributesSelected: [] });
+    
+    const rarity = card.rarity || 'common';
+    const level = card.level || 1;
+    
+    // Define requirements based on Rarity Ladder and Level Scaling
+    let requiredRarity = 'any';
+    let count = 0;
+
+    if (rarity === 'common') {
+      count = level >= 7 ? 2 : level >= 5 ? 1 : 0;
+    } else if (rarity === 'rare') {
+      requiredRarity = 'common';
+      count = level >= 7 ? 2 : 1;
+    } else if (rarity === 'epic') {
+      requiredRarity = 'rare';
+      count = level >= 9 ? 3 : level >= 7 ? 2 : 1;
+    } else if (rarity === 'legendary') {
+      requiredRarity = 'epic';
+      count = level >= 9 ? 4 : level >= 7 ? 3 : 2;
+    }
+
+    const eligibleMonsters = myField.filter(m => m && (requiredRarity === 'any' || m.rarity === requiredRarity));
+
+    if (eligibleMonsters.length < count) {
+      return alert(`Nicht genug Opfer! Du benötigst ${count} Monster der Seltenheit ${requiredRarity.toUpperCase()} auf dem Feld.`);
+    }
+    
+    setSelectedCard({ ...card, origin: 'hand', tributesNeeded: count, requiredRarity, tributesSelected: [] });
   };
 
   const handleFieldClick = (index, side) => {
@@ -141,14 +190,46 @@ export default function Game({ session, match, onGameOver }) {
     const newState = { ...gameState };
 
     if (side === 'player') {
-      if (selectedCard?.origin === 'hand' && !myField[index]) {
-        const newField = isP1 ? [...gameState.p1Field] : [...gameState.p2Field];
-        newField[index] = { ...selectedCard, canAttack: false };
-        if (isP1) newState.p1Field = newField; else newState.p2Field = newField;
-        newState.hasSummoned = true;
-        setPlayerHand(prev => prev.filter(c => c.instanceId !== selectedCard.instanceId));
-        setSelectedCard(null);
-        updateCloudState(newState);
+      if (selectedCard?.origin === 'hand') {
+        const needsMoreTributes = selectedCard.tributesSelected.length < selectedCard.tributesNeeded;
+        
+        if (needsMoreTributes) {
+          const targetCard = myField[index];
+          if (targetCard) {
+            // Check if rarity matches requirement
+            if (selectedCard.requiredRarity !== 'any' && targetCard.rarity !== selectedCard.requiredRarity) {
+              return alert(`Falsche Seltenheit! Du musst ein ${selectedCard.requiredRarity.toUpperCase()} Monster opfern.`);
+            }
+
+            if (selectedCard.tributesSelected.includes(index)) {
+              setSelectedCard(prev => ({ ...prev, tributesSelected: prev.tributesSelected.filter(i => i !== index) }));
+            } else {
+              setSelectedCard(prev => ({ ...prev, tributesSelected: [...prev.tributesSelected, index] }));
+            }
+          }
+          return;
+        }
+
+        // If enough tributes selected, choose empty slot to summon
+        if (!myField[index]) {
+          const newField = isP1 ? [...gameState.p1Field] : [...gameState.p2Field];
+          
+          // Remove Tributes
+          selectedCard.tributesSelected.forEach(tIndex => {
+            newField[tIndex] = null;
+          });
+
+          // Place new monster
+          newField[index] = { ...selectedCard, canAttack: false, tributesSelected: undefined, tributesNeeded: undefined, origin: undefined };
+          
+          if (isP1) newState.p1Field = newField; else newState.p2Field = newField;
+          newState.hasSummoned = true;
+          newState.log.push(`${isP1 ? 'P1' : 'P2'} beschwört ${selectedCard.name}!`);
+          
+          setPlayerHand(prev => prev.filter(c => c.instanceId !== selectedCard.instanceId));
+          setSelectedCard(null);
+          updateCloudState(newState);
+        }
       } else if (myField[index]) {
         setSelectedCard({ ...myField[index], origin: 'field', index });
       }
@@ -189,21 +270,77 @@ export default function Game({ session, match, onGameOver }) {
 
   return (
     <div className={`duel-container ${!myTurn ? 'enemy-active' : ''}`}>
-      <AnimatePresence>{!myTurn && <motion.div className="turn-banner">GEGNER AM ZUG</motion.div>}</AnimatePresence>
+      <AnimatePresence>
+        {!myTurn && <motion.div className="turn-banner" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>GEGNER AM ZUG</motion.div>}
+        
+        {myTurn && selectedCard?.origin === 'hand' && selectedCard.tributesNeeded > 0 && (
+          <motion.div 
+            className="turn-banner" 
+            style={{ background: 'rgba(251, 191, 36, 0.9)', color: '#000', top: '100px' }}
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            {selectedCard.tributesSelected.length < selectedCard.tributesNeeded 
+              ? `OPFER WÄHLEN: NOCH ${selectedCard.tributesNeeded - selectedCard.tributesSelected.length} ${selectedCard.requiredRarity.toUpperCase()}`
+              : "FELD FÜR BESCHWÖRUNG WÄHLEN"}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="lp-bars">
         <div className="lp-bar enemy"><div className="lp-fill" style={{ width: `${(oppLP / INITIAL_LP) * 100}%` }} /><span>GEGNER: {oppLP} LP</span></div>
         <div className="lp-bar player"><div className="lp-fill" style={{ width: `${(myLP / INITIAL_LP) * 100}%` }} /><span>DU: {myLP} LP</span></div>
       </div>
+
       <div className="playmat">
         <div className="mat-row monsters">
-          {oppField.map((card, i) => (<TCGCard key={i} card={card} location="field enemy" onClick={() => handleFieldClick(i, 'enemy')} />))}
+          {oppField.map((card, i) => (
+            <TCGCard 
+              key={i} 
+              card={card} 
+              location="field enemy" 
+              onClick={() => handleFieldClick(i, 'enemy')} 
+            />
+          ))}
         </div>
         <div className="mat-row monsters">
-          {myField.map((card, i) => (<TCGCard key={i} card={card} location="field" onClick={() => handleFieldClick(i, 'player')} isSelected={selectedCard?.index === i} />))}
+          {myField.map((card, i) => {
+            const isTributeSelected = selectedCard?.tributesSelected?.includes(i);
+            const isEligibleTribute = selectedCard?.origin === 'hand' && 
+                                     selectedCard.tributesSelected.length < selectedCard.tributesNeeded &&
+                                     card && 
+                                     (selectedCard.requiredRarity === 'any' || card.rarity === selectedCard.requiredRarity);
+            
+            const isSummonTarget = selectedCard?.origin === 'hand' && 
+                                   selectedCard.tributesSelected.length === selectedCard.tributesNeeded && 
+                                   !card;
+
+            return (
+              <TCGCard 
+                key={i} 
+                card={card} 
+                location="field" 
+                onClick={() => handleFieldClick(i, 'player')} 
+                isSelected={selectedCard?.index === i || isTributeSelected} 
+                isTargetable={isSummonTarget || isEligibleTribute}
+              />
+            );
+          })}
         </div>
       </div>
+
       <div className="ui-bottom">
-        <div className="player-hand">{playerHand.map(c => <TCGCard key={c.instanceId} card={c} location="hand" isSelected={selectedCard?.instanceId === c.instanceId} onClick={handleHandClick} />)}</div>
+        <div className="player-hand">
+          {playerHand.map(c => (
+            <TCGCard 
+              key={c.instanceId} 
+              card={c} 
+              location="hand" 
+              isSelected={selectedCard?.instanceId === c.instanceId} 
+              onClick={handleHandClick} 
+            />
+          ))}
+        </div>
         <div className="phase-controls">
           <div className="phase-indicator">{gameState.phase}</div>
           <button className="next-btn" disabled={!myTurn} onClick={nextPhase}>WEITER</button>
