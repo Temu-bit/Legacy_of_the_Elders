@@ -160,113 +160,108 @@ export default function Collection({ session, setView }) {
               epic: '#a855f7',
               legendary: '#fbbf24'
             }[rarity]
-            
-            const inDeckCount = card.instances.filter(i => i.is_in_deck).length
-
-            return (
-              <div 
-                key={card.id} 
-                className="tcg-card"
-                style={{ 
-                  cursor: 'default', 
-                  position: 'relative',
-                  borderColor: inDeckCount > 0 ? '#10b981' : rColor,
-                  overflow: 'visible',
-                  boxShadow: inDeckCount > 0 
-                    ? `0 0 20px rgba(16, 185, 129, 0.4)`
-                    : rarity === 'legendary' 
-                    ? `0 0 25px rgba(251, 191, 36, 0.5)`
-                    : rarity === 'epic'
-                    ? `0 0 15px rgba(168, 85, 247, 0.4)`
-                    : `0 10px 20px rgba(0,0,0,0.3)`
-                }}
-              >
-                {/* In Deck Badge */}
-                {inDeckCount > 0 && (
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '-10px', 
-                    right: '-10px', 
-                    background: '#10b981', 
-                    color: '#000', 
-                    padding: '2px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '0.6rem', 
-                    fontWeight: 900, 
-                    zIndex: 25,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                  }}>
-                    IM DECK
-                  </div>
-                )}
-                {/* Ownership Count Badge */}
-                {card.count > 1 && (
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '-12px', 
-                    left: '-12px', 
-                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
-                    color: '#fff', 
-                    border: `2px solid ${rColor}`,
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.9rem',
-                    fontWeight: 900,
-                    zIndex: 20,
-                    boxShadow: `0 4px 12px rgba(0,0,0,0.6), 0 0 10px ${rColor}44`,
-                  }}>
-                    {card.count}
-                  </div>
-                )}                <div style={{ width: '100%', height: '100%', borderRadius: '10px', overflow: 'hidden', position: 'relative', background: '#0f172a' }}>
-                  {card.details?.fullArtUrl ? (
-                    <>
-                      <img 
-                        src={card.details.fullArtUrl} 
-                        alt={card.details.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                      <div style={{ 
-                        display: 'none', position: 'absolute', inset: 0, 
-                        flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                        padding: '10px', textAlign: 'center' 
-                      }}>
-                        <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#fbbf24', marginBottom: '5px' }}>{card.details.name}</div>
-                        <div style={{ fontSize: '0.6rem' }}>ATK {card.details.atk} / DEF {card.details.def}</div>
-                      </div>
-                      
-                      {/* Deck Controls Overlay */}
-                      <div className="card-controls" style={{ 
-                        position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', justifyContent: 'center', gap: '15px', zIndex: 10
-                      }}>
-                        <div style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1.2rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                           {inDeckCount} / {card.count} im Deck
-                        </div>
-                        <div style={{ display: 'flex', gap: '15px' }}>
-                           <button onClick={() => removeFromDeck(card)} style={{ background: '#ef4444', border: 'none', color: 'white', borderRadius: '8px', width: '45px', height: '45px', cursor: 'pointer', fontWeight: 900, fontSize: '1.5rem' }}>-</button>
-                           <button onClick={() => addToDeck(card)} style={{ background: '#10b981', border: 'none', color: 'white', borderRadius: '8px', width: '45px', height: '45px', cursor: 'pointer', fontWeight: 900, fontSize: '1.5rem' }}>+</button>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '10px', textAlign: 'center' }}>
-                      <div style={{ fontWeight: 900, color: '#fbbf24' }}>{card.details?.name || 'Unbekannte Karte'}</div>
-                      <div style={{ fontSize: '0.7rem' }}>BILD FEHLT</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
+                       const inDeckCount = card.instances.filter(i => i.is_in_deck).length
+            return <CardItem key={card.id} card={card} inDeckCount={inDeckCount} rColor={rColor} rarity={rarity} removeFromDeck={removeFromDeck} addToDeck={addToDeck} />
           })}
         </div>
+      )}
+    </div>
+  )
+}
+
+function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck }) {
+  const [imgStatus, setImgStatus] = useState('loading') // loading, loaded, error
+
+  return (
+    <div 
+      className="tcg-card"
+      style={{ 
+        cursor: 'default', 
+        position: 'relative',
+        borderColor: inDeckCount > 0 ? '#10b981' : rColor,
+        overflow: 'visible',
+        boxShadow: inDeckCount > 0 
+          ? `0 0 20px rgba(16, 185, 129, 0.4)`
+          : rarity === 'legendary' 
+          ? `0 0 25px rgba(251, 191, 36, 0.5)`
+          : rarity === 'epic'
+          ? `0 0 15px rgba(168, 85, 247, 0.4)`
+          : `0 10px 20px rgba(0,0,0,0.3)`
+      }}
+    >
+      {/* In Deck Badge */}
+      {inDeckCount > 0 && (
+        <div style={{ 
+          position: 'absolute', top: '-10px', right: '-10px', background: '#10b981', color: '#000', 
+          padding: '2px 8px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 900, zIndex: 25,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+        }}>
+          IM DECK
+        </div>
+      )}
+
+      {/* Ownership Count Badge */}
+      {card.count > 1 && (
+        <div style={{ 
+          position: 'absolute', top: '-12px', left: '-12px', 
+          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
+          color: '#fff', border: `2px solid ${rColor}`, width: '38px', height: '38px',
+          borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '0.9rem', fontWeight: 900, zIndex: 20,
+          boxShadow: `0 4px 12px rgba(0,0,0,0.6), 0 0 10px ${rColor}44`,
+        }}>
+          {card.count}
+        </div>
+      )}
+
+      <div style={{ width: '100%', height: '100%', borderRadius: '10px', overflow: 'hidden', position: 'relative', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {card.details?.fullArtUrl ? (
+          <>
+            {imgStatus !== 'loaded' && (
+              <div style={{ 
+                position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center'
+              }}>
+                <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#fbbf24', marginBottom: '5px' }}>{card.details.name}</div>
+                <div style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{imgStatus === 'loading' ? 'LÄDT...' : 'BILD FEHLT'}</div>
+                <div style={{ fontSize: '0.5rem', marginTop: '5px' }}>ATK {card.details.atk} / DEF {card.details.def}</div>
+              </div>
+            )}
+
+            <img 
+              src={card.details.fullArtUrl} 
+              alt={card.details.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: imgStatus === 'loaded' ? 'block' : 'none' }}
+              onLoad={() => setImgStatus('loaded')}
+              onError={() => setImgStatus('error')}
+            />
+            
+            {/* Deck Controls Overlay */}
+            <div className="card-controls" style={{ 
+              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 10,
+              background: 'rgba(0,0,0,0.4)', opacity: 0, transition: 'opacity 0.2s'
+            }} onMouseEnter={(e) => e.currentTarget.style.opacity = 1} onMouseLeave={(e) => e.currentTarget.style.opacity = 0}>
+              <div style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                 {inDeckCount} / {card.count}
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                 <button onClick={(e) => { e.stopPropagation(); removeFromDeck(card); }} style={{ background: '#ef4444', border: 'none', color: 'white', borderRadius: '4px', width: '35px', height: '35px', cursor: 'pointer', fontWeight: 900 }}>-</button>
+                 <button onClick={(e) => { e.stopPropagation(); addToDeck(card); }} style={{ background: '#10b981', border: 'none', color: 'white', borderRadius: '4px', width: '35px', height: '35px', cursor: 'pointer', fontWeight: 900 }}>+</button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '10px' }}>
+            <div style={{ fontWeight: 900, color: '#fbbf24' }}>{card.details?.name}</div>
+            <div style={{ fontSize: '0.7rem' }}>KEIN BILD</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+>
       )}
     </div>
   )
