@@ -19,6 +19,8 @@ export const CARD_POOL = [
   { id: 'c18', name: 'Iron-Clad Behemoth', atk: 2400, def: 1700, level: 5, rarity: 'common', fullArtUrl: '/cards/iron_clad_behemoth.png', type: 'monster', desc: 'Gepanzertes Nashorn, durchbricht jede Wand.' },
   { id: 'c19', name: 'Eklipsen-Ritter', atk: 2800, def: 2100, level: 7, rarity: 'epic', fullArtUrl: '/cards/eclipse_knight.png', type: 'monster', desc: 'Kämpft im Schatten der totalen Sonnenfinsternis.' },
   { id: 'c20', name: 'Chronos Weaver', atk: 1900, def: 3300, level: 7, rarity: 'epic', fullArtUrl: '/cards/chronos_weaver.png', type: 'monster', desc: 'Sie webt die Fäden der Zeit selbst.' },
+  { id: 'c21', name: 'Stone Duck', atk: 2300, def: 2500, level: 7, rarity: 'epic', fullArtUrl: '/cards/stone_duck.png', type: 'monster', desc: 'Eine gewaltige Ente aus lebendem Fels.' },
+  { id: 'c22', name: 'Ocean Empress', atk: 2400, def: 2600, level: 8, rarity: 'legendary', fullArtUrl: '/cards/ocean_empress.png', type: 'monster', desc: 'Die unangefochtene Herrscherin über die sieben Weltmeere.' },
 ];
 
 export const INITIAL_LP = 8000;
