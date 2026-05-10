@@ -166,8 +166,6 @@ export default function Collection({ session, setView }) {
 }
 
 function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck }) {
-  const [imgStatus, setImgStatus] = useState('loading')
-
   return (
     <div 
       className="tcg-card"
@@ -185,6 +183,7 @@ function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck
           : `0 10px 20px rgba(0,0,0,0.3)`
       }}
     >
+      {/* IM DECK Badge */}
       {inDeckCount > 0 && (
         <div style={{ 
           position: 'absolute', top: '-10px', right: '-10px', background: '#10b981', color: '#000', 
@@ -195,46 +194,65 @@ function CardItem({ card, inDeckCount, rColor, rarity, removeFromDeck, addToDeck
         </div>
       )}
 
+      {/* Ownership Count Badge (New sleeker version) */}
       {card.count > 1 && (
         <div style={{ 
-          position: 'absolute', top: '-12px', left: '-12px', 
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
-          color: '#fff', border: `2px solid ${rColor}`, width: '38px', height: '38px',
-          borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.9rem', fontWeight: 900, zIndex: 20,
-          boxShadow: `0 4px 12px rgba(0,0,0,0.6), 0 0 10px ${rColor}44`,
+          position: 'absolute', 
+          top: '8px', 
+          left: '8px', 
+          background: 'rgba(0, 0, 0, 0.7)', 
+          backdropFilter: 'blur(4px)',
+          color: '#fff', 
+          border: `1px solid rgba(255, 255, 255, 0.2)`,
+          padding: '2px 8px',
+          borderRadius: '4px',
+          fontSize: '0.75rem',
+          fontWeight: 900,
+          zIndex: 20,
+          boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
         }}>
-          {card.count}
+          x{card.count}
         </div>
       )}
 
-      <div style={{ width: '100%', height: '100%', borderRadius: '10px', overflow: 'hidden', position: 'relative', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {imgStatus !== 'loaded' && (
-          <div style={{ 
-            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center'
-          }}>
-            <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#fbbf24', marginBottom: '5px' }}>{card.details.name}</div>
-            <div style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{imgStatus === 'loading' ? 'LÄDT...' : 'BILD FEHLT'}</div>
-            <div style={{ fontSize: '0.5rem', marginTop: '5px' }}>ATK {card.details.atk} / DEF {card.details.def}</div>
-          </div>
-        )}
-
-        <img 
-          src={card.details.fullArtUrl} 
-          alt={card.details.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: imgStatus === 'loaded' ? 'block' : 'none' }}
-          onLoad={() => setImgStatus('loaded')}
-          onError={() => setImgStatus('error')}
-        />
+      {/* Main Card Content */}
+      <div style={{ width: '100%', height: '100%', borderRadius: '10px', overflow: 'hidden', position: 'relative', background: '#0f172a', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         
+        {/* The Image */}
+        <div style={{ 
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url('${card.details.fullArtUrl}')`,
+          backgroundSize: card.details.id === 'c21' ? '120%' : 'cover', // Zoom to crop border for Stonefist Drake
+          backgroundPosition: 'center'
+        }} />
+
+        {/* Stats Bar */}
+        <div style={{ 
+          background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 100%)',
+          backdropFilter: 'blur(4px)',
+          padding: '6px 10px', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          fontSize: '0.75rem', 
+          fontWeight: 900,
+          color: '#fff',
+          borderTop: `1px solid ${rColor}55`,
+          zIndex: 5
+        }}>
+          <span>ATK {card.details.atk}</span>
+          <span style={{ color: rColor }}>LV {card.details.level}</span>
+          <span>DEF {card.details.def}</span>
+        </div>
+        
+        {/* Hover Controls */}
         <div className="card-controls" style={{ 
           position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: '10px', zIndex: 10,
           background: 'rgba(0,0,0,0.6)', opacity: 0, transition: 'opacity 0.2s'
         }} onMouseEnter={(e) => e.currentTarget.style.opacity = 1} onMouseLeave={(e) => e.currentTarget.style.opacity = 0}>
           <div style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-             {inDeckCount} / {card.count}
+             {inDeckCount} / {card.count} im Deck
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
              <button onClick={(e) => { e.stopPropagation(); removeFromDeck(card); }} style={{ background: '#ef4444', border: 'none', color: 'white', borderRadius: '4px', width: '35px', height: '35px', cursor: 'pointer', fontWeight: 900 }}>-</button>
